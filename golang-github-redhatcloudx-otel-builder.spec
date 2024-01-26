@@ -3,7 +3,7 @@
 
 # https://github.com/redhatcloudx/ocb-test
 %global goipath         github.com/redhatcloudx/otel-builder
-%global commit          main
+%global commit          CURRENT_COMMIT_GOES_HERE
 
 %gometa -f
 
