@@ -1,0 +1,36 @@
+name: Prep OTEL source
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '>=1.21.6'
+
+      - name: Check golang version
+        run: go version
+
+      - name: Clone opentelemetry-collector repository
+        uses: actions/checkout@v4
+        with:
+          repository: open-telemetry/opentelemetry-collector
+          path: opentelemetry-collector
+
+      - name: Build ocb
+        run: |
+          cd opentelemetry-collector
+          make ocb
+          find . -executable -type f
