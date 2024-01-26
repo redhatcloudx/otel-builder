@@ -1,0 +1,12 @@
+type: spanmetrics
+
+status:
+  class: connector
+  stability:
+    alpha: [traces_to_metrics]
+  distributions: [contrib, sumo, grafana, splunk, liatrio]
+  codeowners:
+    active: [albertteoh, portertech]
+
+tests:
+  config:
