@@ -7,6 +7,11 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+permissions:
+  actions: write
+  contents: write
+  id-token: write
+
 jobs:
 
   build:
@@ -57,20 +62,16 @@ jobs:
       - name: Copy the new source code
         run: |
           mkdir -p src
-          rsync -av --delete opentelemetry-collector/_build/ src/
+          rsync -av opentelemetry-collector/_build/ .
 
-      - name: Save source code as an artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: otel-source
-          path: opentelemetry-collector/_build
-          compression-level: 9
-
-      - name: Commit otel code to the repo
-        uses: s0/git-publish-subdir-action@develop
-        env:
-          REPO: self
-          BRANCH: src
-          FOLDER: src
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SQUASH_HISTORY: false
+      - name: Commit and push if it changed
+        run: |-
+          git config user.name "Major Hayden"
+          git config user.email "major@redhat.com"
+          git add *.go go.mod go.sum
+          timestamp=$(date -u)
+          git commit -m "Updating source: ${timestamp}" || exit 0
+          git clean -fxd
+          git status
+          git pull --rebase
+          git push
