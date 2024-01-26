@@ -23,6 +23,15 @@ jobs:
       - name: Check golang version
         run: go version
 
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
       - name: Clone opentelemetry-collector repository
         uses: actions/checkout@v4
         with:
@@ -39,4 +48,16 @@ jobs:
         run: |
           cd opentelemetry-collector
           ./bin/ocb_linux_amd64 --skip-compilation --config ../manifest.yaml
-          ls -al _build
+
+      - name: Vendor the depedency source code
+        run: |
+          cd opentelemetry-collector/_build
+          go mod vendor
+
+      - name: Save source code as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: otel-source
+          path: opentelemetry-collector/_build
+          compression-level: 9
+          
