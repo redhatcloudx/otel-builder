@@ -8,9 +8,11 @@ jobs:
     trigger: pull_request
     targets:
       - fedora-all
+      - epel-all
 
   - job: copr_build
     trigger: commit
     branch: main
     targets:
       - fedora-all
+      - epel-all
