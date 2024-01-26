@@ -28,15 +28,6 @@ jobs:
       - name: Check golang version
         run: go version
 
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
       - name: Clone opentelemetry-collector repository
         uses: actions/checkout@v4
         with:
