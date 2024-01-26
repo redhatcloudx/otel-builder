@@ -14,5 +14,5 @@ sed -i "s/CURRENT_COMMIT_GOES_HERE/${CURRENT_COMMIT}/" $SPEC
 rpmdev-spectool -R -g $SPEC
 rpmbuild -bs $SPEC | tee /tmp/srpm-name.txt
 SRPM_NAME=$(grep Wrote /tmp/srpm-name.txt | awk '{print $2}')
-mock --quiet --root /etc/mock/fedora-${FEDORA_RELEASE}-x86_64.cfg --postinstall $SRPM_NAME
+mock --root /etc/mock/fedora-${FEDORA_RELEASE}-x86_64.cfg --postinstall "$SRPM_NAME"
 rpmlint /var/lib/mock/fedora-${FEDORA_RELEASE}-x86_64/result/*.rpm
