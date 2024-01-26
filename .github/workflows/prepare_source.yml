@@ -67,18 +67,18 @@ jobs:
           git pull --rebase
           git push
 
-  build:
-    needs: prepare
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          path: src
+  # build:
+  #   needs: prepare
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout repo
+  #       uses: actions/checkout@v4
+  #       with:
+  #         path: src
 
-      - name: Build RPM
-        run: |
-          podman run --rm -it --privileged \
-            --volume ${GITHUB_WORKSPACE}/src:/src \
-            ghcr.io/major/fedora-rpm-builder:main \
-            bash /src/build_rpm.sh
+  #     - name: Build RPM
+  #       run: |
+  #         podman run --rm -it --privileged \
+  #           --volume ${GITHUB_WORKSPACE}/src:/src \
+  #           ghcr.io/major/fedora-rpm-builder:main \
+  #           bash /src/build_rpm.sh
