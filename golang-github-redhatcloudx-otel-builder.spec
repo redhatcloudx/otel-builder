@@ -132,8 +132,6 @@ export GOFLAGS=-mod=vendor
 %gobuild -o %{gobuilddir}/bin/ocb-test %{goipath}
 
 %install
-%gopkginstall
-install -m 0755 -vd                     %{buildroot}%{_bindir}
 install -m 0755 -vp %{gobuilddir}/bin/* %{buildroot}%{_bindir}/
 
 %if %{with check}
