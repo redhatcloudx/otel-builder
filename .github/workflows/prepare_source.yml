@@ -62,13 +62,13 @@ jobs:
       - name: Copy the new source code
         run: |
           mkdir -p src
-          rsync -av opentelemetry-collector/_build/ .
+          rsync -a opentelemetry-collector/_build/ .
 
       - name: Commit and push if it changed
         run: |-
           git config user.name "Major Hayden"
           git config user.email "major@redhat.com"
-          git add *.go go.mod go.sum
+          git add *.go go.mod go.sum vendor
           timestamp=$(date -u)
           git commit -m "Updating source: ${timestamp}" || exit 0
           git clean -fxd
