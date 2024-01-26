@@ -34,4 +34,9 @@ jobs:
         run: |
           cd opentelemetry-collector
           make ocb
-          find . -executable -type f
+
+      - name: Build custom otel source code
+        run: |
+          cd opentelemetry-collector
+          ./bin/ocb_linux_amd64 --skip-compilation --config ../manifest.yaml
+          ls -al _build
