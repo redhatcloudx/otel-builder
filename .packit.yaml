@@ -1,0 +1,16 @@
+specfile_path: otelcol.spec
+upstream_package_name:  otelcol
+downstream_package_name: otelcol
+upstream_project_url: https://github.com/redhatcloudx/otel-builder
+
+jobs:
+  - job: copr_build
+    trigger: pull_request
+    targets:
+      - fedora-all
+
+  - job: copr_build
+    trigger: commit
+    branch: main
+    targets:
+      - fedora-all
