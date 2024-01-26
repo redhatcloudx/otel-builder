@@ -87,6 +87,6 @@ jobs:
 
       - name: Build RPM
         run: |
-          podman run --rm -it --privileged \
-            --volume src:/src quay.io/fedora/fedora:39 \
-            "ls -al /src"
+          podman run --rm --privileged \
+            --volume ${GITHUB_WORKSPACE}/src:/src quay.io/fedora/fedora:39 \
+            "bash /src/build_rpm.sh"
