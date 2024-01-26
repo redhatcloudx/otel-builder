@@ -77,6 +77,7 @@ jobs:
           git push
 
   build:
+    needs: prepare
     runs-on: ubuntu-latest
     container:
       image: quay.io/fedora/fedora:rawhide
