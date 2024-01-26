@@ -80,5 +80,5 @@ jobs:
         run: |
           podman run --rm -it --privileged \
             --volume ${GITHUB_WORKSPACE}/src:/src \
-            quay.io/fedora/fedora:39 \
+            ghcr.io/major/fedora-rpm-builder:main \
             bash /src/build_rpm.sh
