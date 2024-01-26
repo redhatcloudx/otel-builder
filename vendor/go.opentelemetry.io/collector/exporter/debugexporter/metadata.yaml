@@ -1,8 +1,0 @@
-type: debug
-
-status:
-  class: exporter
-  stability:
-    development: [traces, metrics, logs]
-  distributions: [core, contrib]
-  warnings: [Unstable Output Format]
