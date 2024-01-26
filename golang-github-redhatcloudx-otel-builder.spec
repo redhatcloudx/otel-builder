@@ -119,8 +119,6 @@ Provides: bundled(golang(golang.org/x/sys/windows/svc/eventlog)) = 0.16.0
 
 %description %{common_description}
 
-%gopkg
-
 %prep
 # Use vendored dependencies.
 %goprep -k
