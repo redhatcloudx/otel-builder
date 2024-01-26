@@ -80,15 +80,20 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     container:
-      image: quay.io/fedora/fedora:rawhide
+      image: quay.io/fedora/fedora:39
       volumes:
         - output:/output
     steps:
       - name: Install required packages
-        run: dnf -y install git mock rpm-build
+        run: |
+          echo "fastestmirror=1" >> /etc/dnf/dnf.conf
+          echo "max_parallel_downloads=20" >> /etc/dnf/dnf.conf
+          dnf -qy install git mock rpm-build
 
       - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Ensure repo is fully updated
-        run: git pull --rebase
+        run: |
+          git config --global safe.directory '*'
+          git pull --rebase
