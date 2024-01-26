@@ -9,14 +9,15 @@
 
 
 %global common_description %{expand:
-# FIXME}
+Customized opentelemetry-collector build
+for Red Hat's Cloud Experience team.}
 
 Name:           %{goname}
 Version:        0
 Release:        %autorelease -p
 Summary:        None
 
-License:        # FIXME
+License:        Apache-2.0
 URL:            %{gourl}
 Source:         %{gosource}
 
@@ -144,8 +145,6 @@ install -m 0755 -vp %{gobuilddir}/bin/* %{buildroot}%{_bindir}/
 
 %files
 %{_bindir}/*
-
-%gopkgfiles
 
 %changelog
 %autochangelog
