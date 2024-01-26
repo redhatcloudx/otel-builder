@@ -89,4 +89,4 @@ jobs:
         run: |
           podman run --rm -it --privileged \
             --volume src:/src quay.io/fedora/fedora:39 \
-            /src/build_rpm.sh
+            "ls -al /src"
