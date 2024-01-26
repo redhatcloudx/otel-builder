@@ -16,7 +16,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: '>=1.21.6'
 
@@ -28,6 +28,7 @@ jobs:
         with:
           repository: open-telemetry/opentelemetry-collector
           path: opentelemetry-collector
+          ref: 'v0.93.0'
 
       - name: Build ocb
         run: |
