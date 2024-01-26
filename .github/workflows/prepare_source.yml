@@ -54,10 +54,23 @@ jobs:
           cd opentelemetry-collector/_build
           go mod vendor
 
+      - name: Copy the new source code
+        run: |
+          mkdir -p src
+          rsync -av --delete opentelemetry-collector/_build/ src/
+
       - name: Save source code as an artifact
         uses: actions/upload-artifact@v4
         with:
           name: otel-source
           path: opentelemetry-collector/_build
           compression-level: 9
-          
+
+      - name: Commit otel code to the repo
+        uses: s0/git-publish-subdir-action@develop
+        env:
+          REPO: self
+          BRANCH: main
+          FOLDER: src
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SQUASH_HISTORY: false
