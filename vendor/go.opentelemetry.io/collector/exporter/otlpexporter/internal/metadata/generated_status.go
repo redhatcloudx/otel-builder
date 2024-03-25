@@ -9,17 +9,20 @@ import (
 	"go.opentelemetry.io/collector/component"
 )
 
+var (
+	Type = component.MustNewType("otlp")
+)
+
 const (
-	Type             = "otlp"
 	LogsStability    = component.StabilityLevelBeta
 	TracesStability  = component.StabilityLevelStable
 	MetricsStability = component.StabilityLevelStable
 )
 
 func Meter(settings component.TelemetrySettings) metric.Meter {
-	return settings.MeterProvider.Meter("otelcol/otlp")
+	return settings.MeterProvider.Meter("go.opentelemetry.io/collector/exporter/otlpexporter")
 }
 
 func Tracer(settings component.TelemetrySettings) trace.Tracer {
-	return settings.TracerProvider.Tracer("otelcol/otlp")
+	return settings.TracerProvider.Tracer("go.opentelemetry.io/collector/exporter/otlpexporter")
 }
