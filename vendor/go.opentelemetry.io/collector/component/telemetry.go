@@ -15,7 +15,7 @@ import (
 // TelemetrySettings provides components with APIs to report telemetry.
 //
 // Note: there is a service version of this struct, servicetelemetry.TelemetrySettings, that mirrors
-// this struct with the exception of ReportComponentStatus. When adding or removing anything from
+// this struct with the exception of ReportStatus. When adding or removing anything from
 // this struct consider whether or not the same should be done for the service version.
 type TelemetrySettings struct {
 	// Logger that the factory can use during creation and can pass to the created
@@ -34,13 +34,6 @@ type TelemetrySettings struct {
 
 	// Resource contains the resource attributes for the collector's telemetry.
 	Resource pcommon.Resource
-
-	// ReportComponentStatus allows a component to report runtime changes in status. The service
-	// will automatically report status for a component during startup and shutdown. Components can
-	// use this method to report status after start and before shutdown.
-	// Deprecated: [v0.92.0] This function will be removed in a future release.
-	// Use ReportStatus instead.
-	ReportComponentStatus func(*StatusEvent) error
 
 	// ReportStatus allows a component to report runtime changes in status. The service
 	// will automatically report status for a component during startup and shutdown. Components can
