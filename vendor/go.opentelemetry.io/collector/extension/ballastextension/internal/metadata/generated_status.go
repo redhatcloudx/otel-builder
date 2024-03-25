@@ -9,15 +9,18 @@ import (
 	"go.opentelemetry.io/collector/component"
 )
 
+var (
+	Type = component.MustNewType("memory_ballast")
+)
+
 const (
-	Type               = "memory_ballast"
 	ExtensionStability = component.StabilityLevelDeprecated
 )
 
 func Meter(settings component.TelemetrySettings) metric.Meter {
-	return settings.MeterProvider.Meter("otelcol/ballast")
+	return settings.MeterProvider.Meter("go.opentelemetry.io/collector/extension/ballastextension")
 }
 
 func Tracer(settings component.TelemetrySettings) trace.Tracer {
-	return settings.TracerProvider.Tracer("otelcol/ballast")
+	return settings.TracerProvider.Tracer("go.opentelemetry.io/collector/extension/ballastextension")
 }
