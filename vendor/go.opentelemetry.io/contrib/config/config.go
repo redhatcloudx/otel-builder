@@ -7,9 +7,8 @@ import (
 	"context"
 	"errors"
 
+	"go.opentelemetry.io/otel/log"
 	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -37,6 +36,7 @@ func noopShutdown(context.Context) error {
 type SDK struct {
 	meterProvider  metric.MeterProvider
 	tracerProvider trace.TracerProvider
+	loggerProvider log.LoggerProvider
 	shutdown       shutdownFunc
 }
 
@@ -48,6 +48,11 @@ func (s *SDK) TracerProvider() trace.TracerProvider {
 // MeterProvider returns a configured metric.MeterProvider.
 func (s *SDK) MeterProvider() metric.MeterProvider {
 	return s.meterProvider
+}
+
+// LoggerProvider returns a configured log.LoggerProvider.
+func (s *SDK) LoggerProvider() log.LoggerProvider {
+	return s.loggerProvider
 }
 
 // Shutdown calls shutdown on all configured providers.
@@ -69,8 +74,17 @@ func NewSDK(opts ...ConfigurationOption) (SDK, error) {
 		return SDK{}, err
 	}
 
-	mp, mpShutdown := initMeterProvider(o)
+	mp, mpShutdown, err := meterProvider(o, r)
+	if err != nil {
+		return SDK{}, err
+	}
+
 	tp, tpShutdown, err := tracerProvider(o, r)
+	if err != nil {
+		return SDK{}, err
+	}
+
+	lp, lpShutdown, err := loggerProvider(o, r)
 	if err != nil {
 		return SDK{}, err
 	}
@@ -78,9 +92,9 @@ func NewSDK(opts ...ConfigurationOption) (SDK, error) {
 	return SDK{
 		meterProvider:  mp,
 		tracerProvider: tp,
+		loggerProvider: lp,
 		shutdown: func(ctx context.Context) error {
-			err := mpShutdown(ctx)
-			return errors.Join(err, tpShutdown(ctx))
+			return errors.Join(mpShutdown(ctx), tpShutdown(ctx), lpShutdown(ctx))
 		},
 	}, nil
 }
@@ -119,13 +133,3 @@ func WithOpenTelemetryConfiguration(cfg OpenTelemetryConfiguration) Configuratio
 
 // TODO: create SDK from the model:
 // - https://github.com/open-telemetry/opentelemetry-go-contrib/issues/4371
-
-func newResource(res *Resource) (*resource.Resource, error) {
-	if res == nil {
-		return resource.Default(), nil
-	}
-	return resource.Merge(resource.Default(),
-		resource.NewWithAttributes(semconv.SchemaURL,
-			semconv.ServiceName(*res.Attributes.ServiceName),
-		))
-}
