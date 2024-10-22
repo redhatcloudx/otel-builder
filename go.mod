@@ -29,7 +29,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver v0.93.0
 	github.com/stretchr/testify v1.8.4
 	go.opentelemetry.io/collector/component v0.93.0
-	go.opentelemetry.io/collector/connector v0.93.0
+	go.opentelemetry.io/collector/connector v0.112.0
 	go.opentelemetry.io/collector/exporter v0.93.0
 	go.opentelemetry.io/collector/exporter/debugexporter v0.93.0
 	go.opentelemetry.io/collector/exporter/loggingexporter v0.93.0
