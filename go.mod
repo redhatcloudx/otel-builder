@@ -5,7 +5,7 @@ module github.com/os-observability/redhat-opentelemetry-collector
 go 1.20
 
 require (
-	github.com/open-telemetry/opentelemetry-collector-contrib/connector/spanmetricsconnector v0.93.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/connector/spanmetricsconnector v0.112.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter v0.93.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusexporter v0.93.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/bearertokenauthextension v0.93.0
