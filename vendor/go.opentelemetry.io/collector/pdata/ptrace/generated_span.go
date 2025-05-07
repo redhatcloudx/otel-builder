@@ -44,6 +44,10 @@ func NewSpan() Span {
 func (ms Span) MoveTo(dest Span) {
 	ms.state.AssertMutable()
 	dest.state.AssertMutable()
+	// If they point to the same data, they are the same, nothing to do.
+	if ms.orig == dest.orig {
+		return
+	}
 	*dest.orig = *ms.orig
 	*ms.orig = otlptrace.Span{}
 }
@@ -95,6 +99,17 @@ func (ms Span) Name() string {
 func (ms Span) SetName(v string) {
 	ms.state.AssertMutable()
 	ms.orig.Name = v
+}
+
+// Flags returns the flags associated with this Span.
+func (ms Span) Flags() uint32 {
+	return ms.orig.Flags
+}
+
+// SetFlags replaces the flags associated with this Span.
+func (ms Span) SetFlags(v uint32) {
+	ms.state.AssertMutable()
+	ms.orig.Flags = v
 }
 
 // Kind returns the kind associated with this Span.
@@ -191,6 +206,7 @@ func (ms Span) CopyTo(dest Span) {
 	ms.TraceState().CopyTo(dest.TraceState())
 	dest.SetParentSpanID(ms.ParentSpanID())
 	dest.SetName(ms.Name())
+	dest.SetFlags(ms.Flags())
 	dest.SetKind(ms.Kind())
 	dest.SetStartTimestamp(ms.StartTimestamp())
 	dest.SetEndTimestamp(ms.EndTimestamp())

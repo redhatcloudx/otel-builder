@@ -8,6 +8,9 @@ import (
 )
 
 // TraceState represents the trace state from the w3c-trace-context.
+//
+// Must use NewTraceState function to create new instances.
+// Important: zero-initialized instance is not valid for use.
 type TraceState internal.TraceState
 
 func NewTraceState() TraceState {
@@ -39,6 +42,10 @@ func (ms TraceState) FromRaw(v string) {
 func (ms TraceState) MoveTo(dest TraceState) {
 	ms.getState().AssertMutable()
 	dest.getState().AssertMutable()
+	// If they point to the same data, they are the same, nothing to do.
+	if ms.getOrig() == dest.getOrig() {
+		return
+	}
 	*dest.getOrig() = *ms.getOrig()
 	*ms.getOrig() = ""
 }
