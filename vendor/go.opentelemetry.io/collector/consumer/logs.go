@@ -6,14 +6,16 @@ package consumer // import "go.opentelemetry.io/collector/consumer"
 import (
 	"context"
 
+	"go.opentelemetry.io/collector/consumer/internal"
 	"go.opentelemetry.io/collector/pdata/plog"
 )
 
 // Logs is an interface that receives plog.Logs, processes it
 // as needed, and sends it to the next processing node if any or to the destination.
 type Logs interface {
-	baseConsumer
-	// ConsumeLogs receives plog.Logs for consumption.
+	internal.BaseConsumer
+	// ConsumeLogs processes the logs. After the function returns, the logs are no longer accessible,
+	// and accessing them is considered undefined behavior.
 	ConsumeLogs(ctx context.Context, ld plog.Logs) error
 }
 
@@ -26,7 +28,7 @@ func (f ConsumeLogsFunc) ConsumeLogs(ctx context.Context, ld plog.Logs) error {
 }
 
 type baseLogs struct {
-	*baseImpl
+	*internal.BaseImpl
 	ConsumeLogsFunc
 }
 
@@ -36,7 +38,7 @@ func NewLogs(consume ConsumeLogsFunc, options ...Option) (Logs, error) {
 		return nil, errNilFunc
 	}
 	return &baseLogs{
-		baseImpl:        newBaseImpl(options...),
+		BaseImpl:        internal.NewBaseImpl(options...),
 		ConsumeLogsFunc: consume,
 	}, nil
 }
