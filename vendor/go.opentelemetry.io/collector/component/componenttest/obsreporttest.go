@@ -6,10 +6,9 @@ package componenttest // import "go.opentelemetry.io/collector/component/compone
 import (
 	"context"
 
-	ocprom "contrib.go.opencensus.io/exporter/prometheus"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.opencensus.io/stats/view"
+	"go.opentelemetry.io/otel/attribute"
 	otelprom "go.opentelemetry.io/otel/exporters/prometheus"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -39,11 +38,9 @@ type TestTelemetry struct {
 	ts           component.TelemetrySettings
 	id           component.ID
 	SpanRecorder *tracetest.SpanRecorder
-	views        []*view.View
 
 	prometheusChecker *prometheusChecker
 	meterProvider     *sdkmetric.MeterProvider
-	ocExporter        *ocprom.Exporter
 }
 
 // CheckExporterTraces checks that for the current exported values for trace exporter metrics match given values.
@@ -76,26 +73,28 @@ func (tts *TestTelemetry) CheckExporterLogs(sentLogRecords, sendFailedLogRecords
 	return tts.prometheusChecker.checkExporterLogs(tts.id, sentLogRecords, sendFailedLogRecords)
 }
 
-func (tts *TestTelemetry) CheckExporterMetricGauge(metric string, val int64) error {
-	return tts.prometheusChecker.checkExporterMetricGauge(tts.id, metric, val)
+func (tts *TestTelemetry) CheckExporterMetricGauge(metric string, val int64, extraAttrs ...attribute.KeyValue) error {
+	attrs := attributesForExporterMetrics(tts.id)
+	attrs = append(attrs, extraAttrs...)
+	return tts.prometheusChecker.checkGauge(metric, val, attrs)
 }
 
 // CheckProcessorTraces checks that for the current exported values for trace exporter metrics match given values.
 // When this function is called it is required to also call SetupTelemetry as first thing.
-func (tts *TestTelemetry) CheckProcessorTraces(acceptedSpans, refusedSpans, droppedSpans int64) error {
-	return tts.prometheusChecker.checkProcessorTraces(tts.id, acceptedSpans, refusedSpans, droppedSpans)
+func (tts *TestTelemetry) CheckProcessorTraces(acceptedSpans, refusedSpans, droppedSpans, insertedSpans int64) error {
+	return tts.prometheusChecker.checkProcessorTraces(tts.id, acceptedSpans, refusedSpans, droppedSpans, insertedSpans)
 }
 
 // CheckProcessorMetrics checks that for the current exported values for metrics exporter metrics match given values.
 // When this function is called it is required to also call SetupTelemetry as first thing.
-func (tts *TestTelemetry) CheckProcessorMetrics(acceptedMetricPoints, refusedMetricPoints, droppedMetricPoints int64) error {
-	return tts.prometheusChecker.checkProcessorMetrics(tts.id, acceptedMetricPoints, refusedMetricPoints, droppedMetricPoints)
+func (tts *TestTelemetry) CheckProcessorMetrics(acceptedMetricPoints, refusedMetricPoints, droppedMetricPoints, insertedMetricPoints int64) error {
+	return tts.prometheusChecker.checkProcessorMetrics(tts.id, acceptedMetricPoints, refusedMetricPoints, droppedMetricPoints, insertedMetricPoints)
 }
 
 // CheckProcessorLogs checks that for the current exported values for logs exporter metrics match given values.
 // When this function is called it is required to also call SetupTelemetry as first thing.
-func (tts *TestTelemetry) CheckProcessorLogs(acceptedLogRecords, refusedLogRecords, droppedLogRecords int64) error {
-	return tts.prometheusChecker.checkProcessorLogs(tts.id, acceptedLogRecords, refusedLogRecords, droppedLogRecords)
+func (tts *TestTelemetry) CheckProcessorLogs(acceptedLogRecords, refusedLogRecords, droppedLogRecords, insertedLogRecords int64) error {
+	return tts.prometheusChecker.checkProcessorLogs(tts.id, acceptedLogRecords, refusedLogRecords, droppedLogRecords, insertedLogRecords)
 }
 
 // CheckReceiverTraces checks that for the current exported values for trace receiver metrics match given values.
@@ -124,8 +123,6 @@ func (tts *TestTelemetry) CheckScraperMetrics(receiver component.ID, scraper com
 
 // Shutdown unregisters any views and shuts down the SpanRecorder
 func (tts *TestTelemetry) Shutdown(ctx context.Context) error {
-	view.Unregister(tts.views...)
-	view.UnregisterExporter(tts.ocExporter)
 	var errs error
 	errs = multierr.Append(errs, tts.SpanRecorder.Shutdown(ctx))
 	if tts.meterProvider != nil {
@@ -153,18 +150,6 @@ func SetupTelemetry(id component.ID) (TestTelemetry, error) {
 	}
 	settings.ts.TracerProvider = tp
 	settings.ts.MetricsLevel = configtelemetry.LevelNormal
-	err := view.Register(settings.views...)
-	if err != nil {
-		return settings, err
-	}
-
-	promReg := prometheus.NewRegistry()
-
-	settings.ocExporter, err = ocprom.NewExporter(ocprom.Options{Registry: promReg})
-	if err != nil {
-		return settings, err
-	}
-	view.RegisterExporter(settings.ocExporter)
 
 	promRegOtel := prometheus.NewRegistry()
 
