@@ -51,7 +51,7 @@ func (ko *Koanf) Int64s(path string) []int64 {
 			out = append(out, i)
 		}
 		return out
-	case []interface{}:
+	case []any:
 		out = make([]int64, 0, len(v))
 		for _, vi := range v {
 			i, err := toInt64(vi)
@@ -91,7 +91,7 @@ func (ko *Koanf) Int64Map(path string) map[string]int64 {
 		return out
 	}
 
-	mp, ok := o.(map[string]interface{})
+	mp, ok := o.(map[string]any)
 	if !ok {
 		return out
 	}
@@ -114,7 +114,7 @@ func (ko *Koanf) Int64Map(path string) map[string]int64 {
 }
 
 // MustInt64Map returns the map[string]int64 value of a given key path
-// or panics if its not set or set to default value.
+// or panics if it isn't set or set to default value.
 func (ko *Koanf) MustInt64Map(path string) map[string]int64 {
 	val := ko.Int64Map(path)
 	if len(val) == 0 {
@@ -130,7 +130,7 @@ func (ko *Koanf) Int(path string) int {
 }
 
 // MustInt returns the int value of a given key path or panics
-// or panics if its not set or set to default value of 0.
+// if it isn't set or set to default value of 0.
 func (ko *Koanf) MustInt(path string) int {
 	val := ko.Int(path)
 	if val == 0 {
@@ -158,7 +158,7 @@ func (ko *Koanf) Ints(path string) []int {
 			out = append(out, int(vi))
 		}
 		return out
-	case []interface{}:
+	case []any:
 		out = make([]int, 0, len(v))
 		for _, vi := range v {
 			i, err := toInt64(vi)
@@ -221,7 +221,7 @@ func (ko *Koanf) Float64(path string) float64 {
 }
 
 // MustFloat64 returns the float64 value of a given key path or panics
-// or panics if its not set or set to default value 0.
+// if it isn't set or set to default value 0.
 func (ko *Koanf) MustFloat64(path string) float64 {
 	val := ko.Float64(path)
 	if val == 0 {
@@ -243,7 +243,7 @@ func (ko *Koanf) Float64s(path string) []float64 {
 	switch v := o.(type) {
 	case []float64:
 		return v
-	case []interface{}:
+	case []any:
 		out = make([]float64, 0, len(v))
 		for _, vi := range v {
 			i, err := toFloat64(vi)
@@ -283,7 +283,7 @@ func (ko *Koanf) Float64Map(path string) map[string]float64 {
 		return out
 	}
 
-	mp, ok := o.(map[string]interface{})
+	mp, ok := o.(map[string]any)
 	if !ok {
 		return out
 	}
@@ -328,7 +328,7 @@ func (ko *Koanf) Duration(path string) time.Duration {
 }
 
 // MustDuration returns the time.Duration value of a given key path or panics
-// if its not set or set to default value 0.
+// if it isn't set or set to default value 0.
 func (ko *Koanf) MustDuration(path string) time.Duration {
 	val := ko.Duration(path)
 	if val == 0 {
@@ -382,7 +382,7 @@ func (ko *Koanf) String(path string) string {
 }
 
 // MustString returns the string value of a given key path
-// or panics if its not set or set to default value "".
+// or panics if it isn't set or set to default value "".
 func (ko *Koanf) MustString(path string) string {
 	val := ko.String(path)
 	if val == "" {
@@ -402,7 +402,7 @@ func (ko *Koanf) Strings(path string) []string {
 
 	var out []string
 	switch v := o.(type) {
-	case []interface{}:
+	case []any:
 		out = make([]string, 0, len(v))
 		for _, u := range v {
 			if s, ok := u.(string); ok {
@@ -414,7 +414,7 @@ func (ko *Koanf) Strings(path string) []string {
 		return out
 	case []string:
 		out := make([]string, len(v))
-		copy(out[:], v[:])
+		copy(out, v)
 		return out
 	}
 
@@ -449,7 +449,7 @@ func (ko *Koanf) StringMap(path string) map[string]string {
 		for k, v := range mp {
 			out[k] = v
 		}
-	case map[string]interface{}:
+	case map[string]any:
 		out = make(map[string]string, len(mp))
 		for k, v := range mp {
 			switch s := v.(type) {
@@ -493,7 +493,7 @@ func (ko *Koanf) StringsMap(path string) map[string][]string {
 		for k, v := range mp {
 			out[k] = append(out[k], v...)
 		}
-	case map[string][]interface{}:
+	case map[string][]any:
 		out = make(map[string][]string, len(mp))
 		for k, v := range mp {
 			for _, v := range v {
@@ -505,13 +505,13 @@ func (ko *Koanf) StringsMap(path string) map[string][]string {
 				}
 			}
 		}
-	case map[string]interface{}:
+	case map[string]any:
 		out = make(map[string][]string, len(mp))
 		for k, v := range mp {
 			switch s := v.(type) {
 			case []string:
 				out[k] = append(out[k], s...)
-			case []interface{}:
+			case []any:
 				for _, v := range s {
 					switch sv := v.(type) {
 					case string:
@@ -578,7 +578,7 @@ func (ko *Koanf) Bools(path string) []bool {
 
 	var out []bool
 	switch v := o.(type) {
-	case []interface{}:
+	case []any:
 		out = make([]bool, 0, len(v))
 		for _, u := range v {
 			b, err := toBool(u)
@@ -616,7 +616,7 @@ func (ko *Koanf) BoolMap(path string) map[string]bool {
 		return out
 	}
 
-	mp, ok := o.(map[string]interface{})
+	mp, ok := o.(map[string]any)
 	if !ok {
 		return out
 	}
