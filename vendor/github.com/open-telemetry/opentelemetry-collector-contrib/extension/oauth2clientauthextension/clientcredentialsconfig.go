@@ -8,11 +8,31 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"go.uber.org/multierr"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 )
+
+const (
+	grantTypeClientCredentials = "client_credentials"
+)
+
+func newClientCredentialsGrantTypeConfig(cfg *Config) *clientCredentialsConfig {
+	return &clientCredentialsConfig{
+		Config: clientcredentials.Config{
+			ClientID:       cfg.ClientID,
+			ClientSecret:   string(cfg.ClientSecret),
+			TokenURL:       cfg.TokenURL,
+			Scopes:         cfg.Scopes,
+			EndpointParams: cfg.EndpointParams,
+		},
+		ClientIDFile:     cfg.ClientIDFile,
+		ClientSecretFile: cfg.ClientSecretFile,
+		ExpiryBuffer:     cfg.ExpiryBuffer,
+	}
+}
 
 // clientCredentialsConfig is a clientcredentials.Config wrapper to allow
 // values read from files in the ClientID and ClientSecret fields.
@@ -36,6 +56,7 @@ type clientCredentialsConfig struct {
 
 	ClientIDFile     string
 	ClientSecretFile string
+	ExpiryBuffer     time.Duration
 }
 
 type clientCredentialsTokenSource struct {
@@ -60,7 +81,7 @@ func readCredentialsFile(path string) (string, error) {
 }
 
 func getActualValue(value, filepath string) (string, error) {
-	if len(filepath) > 0 {
+	if filepath != "" {
 		return readCredentialsFile(filepath)
 	}
 
@@ -90,7 +111,11 @@ func (c *clientCredentialsConfig) createConfig() (*clientcredentials.Config, err
 }
 
 func (c *clientCredentialsConfig) TokenSource(ctx context.Context) oauth2.TokenSource {
-	return oauth2.ReuseTokenSource(nil, clientCredentialsTokenSource{ctx: ctx, config: c})
+	return clientCredentialsTokenSource{ctx: ctx, config: c}
+}
+
+func (c *clientCredentialsConfig) TokenEndpoint() string {
+	return c.TokenURL
 }
 
 func (ts clientCredentialsTokenSource) Token() (*oauth2.Token, error) {
