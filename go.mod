@@ -13,7 +13,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/jaegerremotesampling v0.93.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/oauth2clientauthextension v0.93.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension v0.93.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor v0.93.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor v0.156.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.93.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor v0.93.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor v0.93.0
