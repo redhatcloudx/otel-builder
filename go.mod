@@ -9,7 +9,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter v0.93.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusexporter v0.93.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/bearertokenauthextension v0.93.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.93.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.157.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/jaegerremotesampling v0.93.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/oauth2clientauthextension v0.93.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension v0.93.0
