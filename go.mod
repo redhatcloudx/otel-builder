@@ -7,7 +7,7 @@ go 1.20
 require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/connector/spanmetricsconnector v0.93.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter v0.93.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusexporter v0.93.0
+	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusexporter v0.159.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/bearertokenauthextension v0.93.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.93.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/jaegerremotesampling v0.93.0
