@@ -5,6 +5,7 @@ package featuregate // import "go.opentelemetry.io/collector/featuregate"
 
 import (
 	"flag"
+	"fmt"
 	"strings"
 
 	"go.uber.org/multierr"
@@ -31,6 +32,12 @@ type flagValue struct {
 }
 
 func (f *flagValue) String() string {
+	// This function can be called by isZeroValue https://github.com/golang/go/blob/go1.23.3/src/flag/flag.go#L630
+	// which creates an instance of flagValue using reflect.New. In this case, the field `reg` is nil.
+	if f.reg == nil {
+		return ""
+	}
+
 	var ids []string
 	f.reg.VisitAll(func(g *Gate) {
 		id := g.ID()
@@ -51,6 +58,10 @@ func (f *flagValue) Set(s string) error {
 	ids := strings.Split(s, ",")
 	for i := range ids {
 		id := ids[i]
+		if id == "" {
+			errs = multierr.Append(errs, fmt.Errorf("empty feature gate identifier at index %d", i))
+			continue
+		}
 		val := true
 		switch id[0] {
 		case '-':
