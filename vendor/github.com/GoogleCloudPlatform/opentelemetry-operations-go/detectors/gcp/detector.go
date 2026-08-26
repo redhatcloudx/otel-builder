@@ -15,8 +15,10 @@
 package gcp
 
 import (
+	"context"
 	"errors"
 	"os"
+	"strings"
 
 	"cloud.google.com/go/compute/metadata"
 )
@@ -37,14 +39,18 @@ const (
 	GCE
 	CloudRun
 	CloudRunJob
+	CloudRunWorkerPool
 	CloudFunctions
 	AppEngineStandard
 	AppEngineFlex
+	BareMetalSolution
 )
 
 // CloudPlatform returns the platform on which this program is running.
 func (d *Detector) CloudPlatform() Platform {
 	switch {
+	case d.onBareMetalSolution():
+		return BareMetalSolution
 	case d.onGKE():
 		return GKE
 	case d.onCloudFunctions():
@@ -53,6 +59,8 @@ func (d *Detector) CloudPlatform() Platform {
 		return CloudRun
 	case d.onCloudRunJob():
 		return CloudRunJob
+	case d.onCloudRunWorkerPool():
+		return CloudRunWorkerPool
 	case d.onAppEngineStandard():
 		return AppEngineStandard
 	case d.onAppEngine():
@@ -65,25 +73,22 @@ func (d *Detector) CloudPlatform() Platform {
 
 // ProjectID returns the ID of the project in which this program is running.
 func (d *Detector) ProjectID() (string, error) {
-	return d.metadata.ProjectID()
+	// N.B. d.metadata.ProjectIDWithContext(context.TODO()) is cached globally, so if we use it here it's untestable.
+	s, err := d.metadata.GetWithContext(context.TODO(), "project/project-id")
+	return strings.TrimSpace(s), err
+}
+
+// instanceID returns the ID of the project in which this program is running.
+func (d *Detector) instanceID() (string, error) {
+	// N.B. d.metadata.InstanceIDWithContext(context.TODO()) is cached globally, so if we use it here it's untestable.
+	s, err := d.metadata.GetWithContext(context.TODO(), "instance/id")
+	return strings.TrimSpace(s), err
 }
 
 // Detector collects resource information for all GCP platforms.
 type Detector struct {
-	metadata metadataProvider
+	metadata *metadata.Client
 	os       osProvider
-}
-
-// metadataProvider contains the subset of the metadata.Client functions used
-// by this resource Detector to allow testing with a fake implementation.
-type metadataProvider interface {
-	ProjectID() (string, error)
-	InstanceID() (string, error)
-	Get(string) (string, error)
-	InstanceName() (string, error)
-	Hostname() (string, error)
-	Zone() (string, error)
-	InstanceAttributeValue(string) (string, error)
 }
 
 // osProvider contains the subset of the os package functions used by.
