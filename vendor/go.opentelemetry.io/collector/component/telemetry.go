@@ -8,42 +8,27 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 
-	"go.opentelemetry.io/collector/config/configtelemetry"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 )
 
 // TelemetrySettings provides components with APIs to report telemetry.
-//
-// Note: there is a service version of this struct, servicetelemetry.TelemetrySettings, that mirrors
-// this struct with the exception of ReportComponentStatus. When adding or removing anything from
-// this struct consider whether or not the same should be done for the service version.
 type TelemetrySettings struct {
 	// Logger that the factory can use during creation and can pass to the created
 	// component to be used later as well.
 	Logger *zap.Logger
 
 	// TracerProvider that the factory can pass to other instrumented third-party libraries.
+	//
+	// The service may wrap this provider for attribute injection. The wrapper may implement an
+	// additional `Unwrap() trace.TracerProvider` method to grant access to the underlying SDK.
 	TracerProvider trace.TracerProvider
 
 	// MeterProvider that the factory can pass to other instrumented third-party libraries.
 	MeterProvider metric.MeterProvider
 
-	// MetricsLevel controls the level of detail for metrics emitted by the collector.
-	// Experimental: *NOTE* this field is experimental and may be changed or removed.
-	MetricsLevel configtelemetry.Level
-
 	// Resource contains the resource attributes for the collector's telemetry.
 	Resource pcommon.Resource
 
-	// ReportComponentStatus allows a component to report runtime changes in status. The service
-	// will automatically report status for a component during startup and shutdown. Components can
-	// use this method to report status after start and before shutdown.
-	// Deprecated: [v0.92.0] This function will be removed in a future release.
-	// Use ReportStatus instead.
-	ReportComponentStatus func(*StatusEvent) error
-
-	// ReportStatus allows a component to report runtime changes in status. The service
-	// will automatically report status for a component during startup and shutdown. Components can
-	// use this method to report status after start and before shutdown.
-	ReportStatus func(*StatusEvent)
+	// prevent unkeyed literal initialization
+	_ struct{}
 }
