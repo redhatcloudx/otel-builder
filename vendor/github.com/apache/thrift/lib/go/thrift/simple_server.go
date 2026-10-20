@@ -22,9 +22,8 @@ package thrift
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
-	"net"
+	"log/slog"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -70,7 +69,7 @@ type TSimpleServer struct {
 	// Headers to auto forward in THeaderProtocol
 	forwardHeaders []string
 
-	logger Logger
+	logContext atomic.Pointer[context.Context]
 }
 
 func NewTSimpleServer2(processor TProcessor, serverTransport TServerTransport) *TSimpleServer {
@@ -179,8 +178,18 @@ func (p *TSimpleServer) SetForwardHeaders(headers []string) {
 //
 // If no logger was set before Serve is called, a default logger using standard
 // log library will be used.
-func (p *TSimpleServer) SetLogger(logger Logger) {
-	p.logger = logger
+//
+// Deprecated: The logging inside TSimpleServer is now done via slog on error
+// level, this does nothing now. It will be removed in a future version.
+func (p *TSimpleServer) SetLogger(_ Logger) {}
+
+// SetLogContext sets the context to be used when logging errors inside
+// TSimpleServer.
+//
+// If this is not called before calling Serve, context.Background() will be
+// used.
+func (p *TSimpleServer) SetLogContext(ctx context.Context) {
+	p.logContext.Store(&ctx)
 }
 
 func (p *TSimpleServer) innerAccept() (int32, error) {
@@ -195,14 +204,17 @@ func (p *TSimpleServer) innerAccept() (int32, error) {
 		return 0, err
 	}
 	if client != nil {
+
 		ctx, cancel := context.WithCancel(context.Background())
 		p.wg.Add(2)
 
 		go func() {
 			defer p.wg.Done()
 			defer cancel()
+			defer client.Close()
 			if err := p.processRequests(client); err != nil {
-				p.logger(fmt.Sprintf("error processing request: %v", err))
+				ctx := p.logContext.Load()
+				slog.ErrorContext(*ctx, "error processing request", "err", err)
 			}
 		}()
 
@@ -233,7 +245,7 @@ func (p *TSimpleServer) AcceptLoop() error {
 }
 
 func (p *TSimpleServer) Serve() error {
-	p.logger = fallbackLogger(p.logger)
+	p.logContext.CompareAndSwap(nil, Pointer(context.Background()))
 
 	err := p.Listen()
 	if err != nil {
@@ -355,13 +367,7 @@ func (p *TSimpleServer) processRequests(client TTransport) (err error) {
 
 		ok, err := processor.Process(ctx, inputProtocol, outputProtocol)
 		if errors.Is(err, ErrAbandonRequest) {
-			err := client.Close()
-			if errors.Is(err, net.ErrClosed) {
-				// In this case, it's kinda expected to get
-				// net.ErrClosed, treat that as no-error
-				return nil
-			}
-			return err
+			return nil
 		}
 		if errors.As(err, new(TTransportException)) && err != nil {
 			return err

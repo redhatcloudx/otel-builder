@@ -1,24 +1,17 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+// Package component outlines the abstraction of components within the OpenTelemetry Collector. It provides details on the component
+// lifecycle as well as defining the interface that components must fulfill.
 package component // import "go.opentelemetry.io/collector/component"
 
 import (
 	"context"
-	"errors"
+	"fmt"
+	"strings"
 )
 
-var (
-	// ErrNilNextConsumer can be returned by receiver, or processor Start factory funcs that create the Component if the
-	// expected next Consumer is nil.
-	ErrNilNextConsumer = errors.New("nil next Consumer")
-
-	// ErrDataTypeIsNotSupported can be returned by receiver, exporter or processor factory funcs that create the
-	// Component if the particular telemetry data type is not supported by the receiver, exporter or processor.
-	ErrDataTypeIsNotSupported = errors.New("telemetry type is not supported")
-)
-
-// Component is either a receiver, exporter, processor, or an extension.
+// Component is either a receiver, exporter, processor, connector, or an extension.
 //
 // A component's lifecycle has the following phases:
 //
@@ -36,11 +29,17 @@ type Component interface {
 	// If this is an exporter component it may prepare for exporting
 	// by connecting to the endpoint.
 	//
-	// If the component needs to perform a long-running starting operation then it is recommended
-	// that Start() returns quickly and the long-running operation is performed in background.
-	// In that case make sure that the long-running operation does not use the context passed
-	// to Start() function since that context will be cancelled soon and can abort the long-running
-	// operation. Create a new context from the context.Background() for long-running operations.
+	// If the component needs to perform a long-running starting operation, then
+	// it is recommended that Start() returns quickly and the long-running
+	// operation is performed in the background. Background operations should
+	// create their own context using context.WithCancel(context.Background())
+	// rather than using the passed context, which is intended only for the
+	// startup operation itself. The component should cancel this context in its
+	// Shutdown() method.
+	//
+	// Note: as of today, the context passed to Start() lives for the entire
+	// lifetime of the collector, but this may change in the future to include a
+	// startup timeout.
 	Start(ctx context.Context, host Host) error
 
 	// Shutdown is invoked during service shutdown. After Shutdown() is called, if the component
@@ -53,7 +52,7 @@ type Component interface {
 	// If there are any background operations running by the component they must be aborted before
 	// this function returns. Remember that if you started any long-running background operations from
 	// the Start() method, those operations must be also cancelled. If there are any buffers in the
-	// component, they should be cleared and the data sent immediately to the next component.
+	// component, they should be flushed with the data being sent immediately to the next component.
 	//
 	// The component's lifecycle is completed once the Shutdown() method returns. No other
 	// methods of the component are called after that. If necessary a new component with
@@ -85,37 +84,26 @@ func (f ShutdownFunc) Shutdown(ctx context.Context) error {
 }
 
 // Kind represents component kinds.
-type Kind int
+type Kind struct {
+	name string
+}
 
-const (
-	_ Kind = iota // skip 0, start types from 1.
-	KindReceiver
-	KindProcessor
-	KindExporter
-	KindExtension
-	KindConnector
+var (
+	KindReceiver  = Kind{name: "Receiver"}
+	KindProcessor = Kind{name: "Processor"}
+	KindExporter  = Kind{name: "Exporter"}
+	KindExtension = Kind{name: "Extension"}
+	KindConnector = Kind{name: "Connector"}
 )
 
 func (k Kind) String() string {
-	switch k {
-	case KindReceiver:
-		return "Receiver"
-	case KindProcessor:
-		return "Processor"
-	case KindExporter:
-		return "Exporter"
-	case KindExtension:
-		return "Extension"
-	case KindConnector:
-		return "Connector"
-	}
-	return ""
+	return k.name
 }
 
 // StabilityLevel represents the stability level of the component created by the factory.
 // The stability level is used to determine if the component should be used in production
 // or not. For more details see:
-// https://github.com/open-telemetry/opentelemetry-collector#stability-levels
+// https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/component-stability.md#stability-levels
 type StabilityLevel int
 
 const (
@@ -127,6 +115,29 @@ const (
 	StabilityLevelBeta
 	StabilityLevelStable
 )
+
+func (sl *StabilityLevel) UnmarshalText(in []byte) error {
+	str := strings.ToLower(string(in))
+	switch str {
+	case "undefined":
+		*sl = StabilityLevelUndefined
+	case "unmaintained":
+		*sl = StabilityLevelUnmaintained
+	case "deprecated":
+		*sl = StabilityLevelDeprecated
+	case "development":
+		*sl = StabilityLevelDevelopment
+	case "alpha":
+		*sl = StabilityLevelAlpha
+	case "beta":
+		*sl = StabilityLevelBeta
+	case "stable":
+		*sl = StabilityLevelStable
+	default:
+		return fmt.Errorf("unsupported stability level: %q", string(in))
+	}
+	return nil
+}
 
 func (sl StabilityLevel) String() string {
 	switch sl {
@@ -151,7 +162,7 @@ func (sl StabilityLevel) String() string {
 func (sl StabilityLevel) LogMessage() string {
 	switch sl {
 	case StabilityLevelUnmaintained:
-		return "Unmaintained component. Actively looking for contributors. Component will become deprecated after 6 months of remaining unmaintained."
+		return "Unmaintained component. Actively looking for contributors. Component will become deprecated after 3 months of remaining unmaintained."
 	case StabilityLevelDeprecated:
 		return "Deprecated component. Will be removed in future releases."
 	case StabilityLevelDevelopment:
@@ -162,21 +173,19 @@ func (sl StabilityLevel) LogMessage() string {
 		return "Beta component. May change in the future."
 	case StabilityLevelStable:
 		return "Stable component."
+	default:
+		return "Stability level of component is undefined"
 	}
-	return "Stability level of component is undefined"
 }
 
 // Factory is implemented by all Component factories.
-//
-// This interface cannot be directly implemented. Implementations must
-// use the factory helpers for the appropriate component type.
 type Factory interface {
 	// Type gets the type of the component created by this factory.
 	Type() Type
 
 	// CreateDefaultConfig creates the default configuration for the Component.
 	// This method can be called multiple times depending on the pipeline
-	// configuration and should not cause side-effects that prevent the creation
+	// configuration and should not cause side effects that prevent the creation
 	// of multiple instances of the Component.
 	// The object returned by this method needs to pass the checks implemented by
 	// 'componenttest.CheckConfigStruct'. It is recommended to have these checks in the
@@ -190,11 +199,4 @@ type CreateDefaultConfigFunc func() Config
 // CreateDefaultConfig implements Factory.CreateDefaultConfig().
 func (f CreateDefaultConfigFunc) CreateDefaultConfig() Config {
 	return f()
-}
-
-// InstanceID uniquely identifies a component instance
-type InstanceID struct {
-	ID          ID
-	Kind        Kind
-	PipelineIDs map[ID]struct{}
 }

@@ -1,3 +1,4 @@
+display_name: Jaeger Remote Sampling Extension
 type: jaegerremotesampling
 
 status:
@@ -6,8 +7,5 @@ status:
     alpha: [extension]
   distributions:
   - contrib
-  - grafana
-  - redhat
-  - sumo
   codeowners:
     active: [yurishkuro, frzifus]
