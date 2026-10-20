@@ -1,20 +1,11 @@
 // Copyright The OpenTelemetry Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
 
-package metricdata // import "go.opentelemetry.io/otel/sdk/metric/metricdata"
+// Package metricdata provides types for the metric SDK data model.
+package metricdata
 
 import (
+	"encoding/json"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -199,7 +190,7 @@ type ExponentialHistogramDataPoint[N int64 | float64] struct {
 type ExponentialBucket struct {
 	// Offset is the bucket index of the first entry in the Counts slice.
 	Offset int32
-	// Counts is an slice where Counts[i] carries the count of the bucket at
+	// Counts is a slice where Counts[i] carries the count of the bucket at
 	// index (Offset+i). Counts[i] is the count of values greater than
 	// base^(Offset+i) and less than or equal to base^(Offset+i+1).
 	Counts []uint64
@@ -209,6 +200,19 @@ type ExponentialBucket struct {
 type Extrema[N int64 | float64] struct {
 	value N
 	valid bool
+}
+
+// MarshalText converts the Extrema value to text.
+func (e Extrema[N]) MarshalText() ([]byte, error) {
+	if !e.valid {
+		return json.Marshal(nil)
+	}
+	return json.Marshal(e.value)
+}
+
+// MarshalJSON converts the Extrema value to JSON number.
+func (e *Extrema[N]) MarshalJSON() ([]byte, error) {
+	return e.MarshalText()
 }
 
 // NewExtrema returns an Extrema set to v.

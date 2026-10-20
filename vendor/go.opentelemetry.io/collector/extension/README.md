@@ -4,13 +4,13 @@ Extensions provide capabilities on top of the primary functionality of the
 collector. Generally, extensions are used for implementing components that can
 be added to the Collector, but which do not require direct access to telemetry
 data and are not part of the pipelines (like receivers, processors or
-exporters). Example extensions are: Health Check extension that responds to
-health check requests or PProf extension that allows fetching Collector's
-performance profile.
+exporters). Example extensions are: Memory Limiter extension that prevents
+out of memory situations or zPages extension that provides live data for
+debugging different components.
 
 Supported service extensions (sorted alphabetically):
 
-- [Memory Ballast](ballastextension/README.md)
+- [Memory Limiter](memorylimiterextension/README.md)
 - [zPages](zpagesextension/README.md)
 
 The [contributors
@@ -28,5 +28,5 @@ will be shutdown. The ordering is determined in the `extensions` tag under the
 service:
   # Extensions specified below are going to be loaded by the service in the
   # order given below, and shutdown on reverse order.
-  extensions: [memory_ballast, zpages]
+  extensions: [extension1, extension2]
 ```
