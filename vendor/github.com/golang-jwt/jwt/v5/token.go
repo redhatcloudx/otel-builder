@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"crypto"
 	"encoding/base64"
 	"encoding/json"
 )
@@ -9,17 +10,30 @@ import (
 // the key for verification.  The function receives the parsed, but unverified
 // Token.  This allows you to use properties in the Header of the token (such as
 // `kid`) to identify which key to use.
-type Keyfunc func(*Token) (interface{}, error)
+//
+// The returned any may be a single key or a VerificationKeySet containing
+// multiple keys.
+type Keyfunc func(*Token) (any, error)
+
+// VerificationKey represents a public or secret key for verifying a token's signature.
+type VerificationKey interface {
+	crypto.PublicKey | []uint8
+}
+
+// VerificationKeySet is a set of public or secret keys. It is used by the parser to verify a token.
+type VerificationKeySet struct {
+	Keys []VerificationKey
+}
 
 // Token represents a JWT Token.  Different fields will be used depending on
 // whether you're creating or parsing/verifying a token.
 type Token struct {
-	Raw       string                 // Raw contains the raw token.  Populated when you [Parse] a token
-	Method    SigningMethod          // Method is the signing method used or to be used
-	Header    map[string]interface{} // Header is the first segment of the token in decoded form
-	Claims    Claims                 // Claims is the second segment of the token in decoded form
-	Signature []byte                 // Signature is the third segment of the token in decoded form.  Populated when you Parse a token
-	Valid     bool                   // Valid specifies if the token is valid.  Populated when you Parse/Verify a token
+	Raw       string         // Raw contains the raw token.  Populated when you [Parse] a token
+	Method    SigningMethod  // Method is the signing method used or to be used
+	Header    map[string]any // Header is the first segment of the token in decoded form
+	Claims    Claims         // Claims is the second segment of the token in decoded form
+	Signature []byte         // Signature is the third segment of the token in decoded form.  Populated when you [Parse] or sign a token
+	Valid     bool           // Valid specifies if the token is valid.  Populated when you [Parse] a token
 }
 
 // New creates a new [Token] with the specified signing method and an empty map
@@ -32,7 +46,7 @@ func New(method SigningMethod, opts ...TokenOption) *Token {
 // claims. Additional options can be specified, but are currently unused.
 func NewWithClaims(method SigningMethod, claims Claims, opts ...TokenOption) *Token {
 	return &Token{
-		Header: map[string]interface{}{
+		Header: map[string]any{
 			"typ": "JWT",
 			"alg": method.Alg(),
 		},
@@ -46,7 +60,7 @@ func NewWithClaims(method SigningMethod, claims Claims, opts ...TokenOption) *To
 // https://golang-jwt.github.io/jwt/usage/signing_methods/#signing-methods-and-key-types
 // for an overview of the different signing methods and their respective key
 // types.
-func (t *Token) SignedString(key interface{}) (string, error) {
+func (t *Token) SignedString(key any) (string, error) {
 	sstr, err := t.SigningString()
 	if err != nil {
 		return "", err
@@ -57,11 +71,13 @@ func (t *Token) SignedString(key interface{}) (string, error) {
 		return "", err
 	}
 
+	t.Signature = sig
+
 	return sstr + "." + t.EncodeSegment(sig), nil
 }
 
 // SigningString generates the signing string.  This is the most expensive part
-// of the whole deal.  Unless you need this for something special, just go
+// of the whole deal. Unless you need this for something special, just go
 // straight for the SignedString.
 func (t *Token) SigningString() (string, error) {
 	h, err := json.Marshal(t.Header)
