@@ -4,6 +4,7 @@
 package featuregate // import "go.opentelemetry.io/collector/featuregate"
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"regexp"
@@ -18,9 +19,14 @@ var (
 	globalRegistry = NewRegistry()
 
 	// idRegexp is used to validate the ID of a Gate.
-	// IDs' characters must be alphanumeric or dots.
-	idRegexp = regexp.MustCompile(`^[0-9a-zA-Z\.]*$`)
+	// IDs are one or more dot-separated segments; each segment must be a
+	// non-empty run of alphanumeric characters, so a leading, trailing, or
+	// doubled dot (e.g. ".foo", "foo.", "foo..bar") is rejected.
+	idRegexp = regexp.MustCompile(`^[0-9a-zA-Z]+(\.[0-9a-zA-Z]+)*$`)
 )
+
+// ErrAlreadyRegistered is returned when adding a Gate that is already registered.
+var ErrAlreadyRegistered = errors.New("gate is already registered")
 
 // GlobalRegistry returns the global Registry.
 func GlobalRegistry() *Registry {
@@ -112,11 +118,11 @@ func (r *Registry) MustRegister(id string, stage Stage, opts ...RegisterOption) 
 
 func validateID(id string) error {
 	if id == "" {
-		return fmt.Errorf("empty ID")
+		return errors.New("empty ID")
 	}
 
 	if !idRegexp.MatchString(id) {
-		return fmt.Errorf("invalid character(s) in ID")
+		return errors.New("invalid character(s) in ID")
 	}
 	return nil
 }
@@ -157,7 +163,7 @@ func (r *Registry) Register(id string, stage Stage, opts ...RegisterOption) (*Ga
 	}
 
 	if _, loaded := r.gates.LoadOrStore(id, g); loaded {
-		return nil, fmt.Errorf("attempted to add pre-existing gate %q", id)
+		return nil, fmt.Errorf("failed to register %q: %w", id, ErrAlreadyRegistered)
 	}
 	return g, nil
 }
@@ -194,7 +200,7 @@ func (r *Registry) Set(id string, enabled bool) error {
 // VisitAll visits all the gates in lexicographical order, calling fn for each.
 func (r *Registry) VisitAll(fn func(*Gate)) {
 	var gates []*Gate
-	r.gates.Range(func(key, value any) bool {
+	r.gates.Range(func(_, value any) bool {
 		gates = append(gates, value.(*Gate))
 		return true
 	})
