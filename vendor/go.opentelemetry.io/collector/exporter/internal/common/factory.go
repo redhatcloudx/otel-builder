@@ -29,35 +29,35 @@ type Common struct {
 	SamplingThereafter int
 }
 
-func CreateTracesExporter(ctx context.Context, set exporter.CreateSettings, config component.Config, c *Common) (exporter.Traces, error) {
+func CreateTracesExporter(ctx context.Context, set exporter.Settings, config component.Config, c *Common) (exporter.Traces, error) {
 	exporterLogger := c.createLogger(set.TelemetrySettings.Logger)
 	s := newLoggingExporter(exporterLogger, c.Verbosity)
 	return exporterhelper.NewTracesExporter(ctx, set, config,
 		s.pushTraces,
 		exporterhelper.WithCapabilities(consumer.Capabilities{MutatesData: false}),
-		exporterhelper.WithTimeout(exporterhelper.TimeoutSettings{Timeout: 0}),
+		exporterhelper.WithTimeout(exporterhelper.TimeoutConfig{Timeout: 0}),
 		exporterhelper.WithShutdown(otlptext.LoggerSync(exporterLogger)),
 	)
 }
 
-func CreateMetricsExporter(ctx context.Context, set exporter.CreateSettings, config component.Config, c *Common) (exporter.Metrics, error) {
+func CreateMetricsExporter(ctx context.Context, set exporter.Settings, config component.Config, c *Common) (exporter.Metrics, error) {
 	exporterLogger := c.createLogger(set.TelemetrySettings.Logger)
 	s := newLoggingExporter(exporterLogger, c.Verbosity)
 	return exporterhelper.NewMetricsExporter(ctx, set, config,
 		s.pushMetrics,
 		exporterhelper.WithCapabilities(consumer.Capabilities{MutatesData: false}),
-		exporterhelper.WithTimeout(exporterhelper.TimeoutSettings{Timeout: 0}),
+		exporterhelper.WithTimeout(exporterhelper.TimeoutConfig{Timeout: 0}),
 		exporterhelper.WithShutdown(otlptext.LoggerSync(exporterLogger)),
 	)
 }
 
-func CreateLogsExporter(ctx context.Context, set exporter.CreateSettings, config component.Config, c *Common) (exporter.Logs, error) {
+func CreateLogsExporter(ctx context.Context, set exporter.Settings, config component.Config, c *Common) (exporter.Logs, error) {
 	exporterLogger := c.createLogger(set.TelemetrySettings.Logger)
 	s := newLoggingExporter(exporterLogger, c.Verbosity)
 	return exporterhelper.NewLogsExporter(ctx, set, config,
 		s.pushLogs,
 		exporterhelper.WithCapabilities(consumer.Capabilities{MutatesData: false}),
-		exporterhelper.WithTimeout(exporterhelper.TimeoutSettings{Timeout: 0}),
+		exporterhelper.WithTimeout(exporterhelper.TimeoutConfig{Timeout: 0}),
 		exporterhelper.WithShutdown(otlptext.LoggerSync(exporterLogger)),
 	)
 }
